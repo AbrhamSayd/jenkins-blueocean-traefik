@@ -1,0 +1,27 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jenkins
+    restart: always
+    networks:
+     - t3-proxy
+     - socket-proxy
+    # uncomment if you don`t intent to use traefik
+    # ports:
+    #  - "8080:8080"
+    #  - "50000:50000"
+    volumes:
+      - $DOCKERDIR/appdata/jenkins:/var/jenkins_home
+    environment:
+      - DOCKER_HOST=tcp://socket-proxy:2376
+      - JENKINS_OPTS=--prefix=/Jenkins
+    labels:
+      - "traefik.enable=true"
+    # Routers
+      - "traefik.http.routers.jenkins-rtr.entrypoints=websecure"
+      - "traefik.http.routers.jenkins-rtr.rule=Host(`jenkins.$DOMAINNAME_1`)"
+    # Services
+      - "traefik.http.routers.jenkins-rtr.service=jenkins-svc"
+      - "traefik.http.services.jenkins-svc.loadbalancer.server.port=8080"
